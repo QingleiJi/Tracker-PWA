@@ -1,0 +1,47 @@
+/* Scandi Theme Variables */
+:root {
+  /* Primary - Sage Green #597366 */
+  --ion-color-primary: #597366;
+  --ion-color-primary-rgb: 89, 115, 102;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #4e655a;
+  --ion-color-primary-tint: #6a8175;
+
+  /* Secondary - Soft Beige/Sand #E6E1D6 (scandiHighlight) */
+  --ion-color-secondary: #e6e1d6;
+  --ion-color-secondary-rgb: 230, 225, 214;
+  --ion-color-secondary-contrast: #333333;
+  --ion-color-secondary-contrast-rgb: 51, 51, 51;
+  --ion-color-secondary-shade: #cac6bc;
+  --ion-color-secondary-tint: #e8e4da;
+
+  /* Backgrounds */
+  --ion-background-color: #f7f7f5;
+  --ion-background-color-rgb: 247, 247, 245;
+  
+  --ion-item-background: #ffffff;
+  --ion-card-background: #ffffff;
+
+  /* Text */
+  --ion-text-color: #333333;
+  --ion-text-color-rgb: 51, 51, 51;
+}
+
+/* Dark Mode Overrides (Optional - keep standard iOS dark or adapt Scandi to dark) */
+@media (prefers-color-scheme: dark) {
+  body {
+    /* Adapting Scandi to Dark */
+    --ion-color-primary: #6a8175; /* Lighter sage */
+    --ion-color-primary-rgb: 106, 129, 117;
+    
+    --ion-background-color: #1c1c1e; /* Standard iOS dark bg */
+    --ion-background-color-rgb: 28, 28, 30;
+    
+    --ion-item-background: #2c2c2e;
+    --ion-card-background: #2c2c2e;
+    
+    --ion-text-color: #f7f7f5;
+    --ion-text-color-rgb: 247, 247, 245;
+  }
+}

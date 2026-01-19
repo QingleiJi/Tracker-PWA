@@ -1,0 +1,30 @@
+.scandi-card {
+  background: var(--ion-card-background);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  padding: 20px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Make it clickable */
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.scandi-card:active {
+    transform: scale(0.98);
+}
+
+.scandi-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ion-text-color);
+    margin: 0;
+}
+
+.scandi-subtitle {
+    font-size: 14px;
+    color: var(--ion-color-medium);
+    margin-top: 4px;
+}
