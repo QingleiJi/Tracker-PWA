@@ -23,10 +23,13 @@ const MeasurementDetail: React.FC = () => {
 
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [entryToEdit, setEntryToEdit] = useState<MeasurementEntry | undefined>(undefined);
+  const [showAll, setShowAll] = useState(false);
 
   const deleteEntry = (entryId: string) => {
       db.measurementEntries.delete(entryId);
   };
+  
+  const displayedEntries = showAll ? entries : entries?.slice(0, 5);
 
   if (!type) {
     // This can be a loading state or a "not found" message after a timeout
@@ -54,8 +57,19 @@ const MeasurementDetail: React.FC = () => {
            <MeasurementChart entries={entries || []} />
         </div>
 
+        {entries && entries.length > 5 && (
+          <div style={{ padding: '0 16px' }}>
+            <IonButton expand="block" fill="clear" onClick={() => setShowAll(!showAll)}>
+              {showAll ? 'Show Less' : 'Show All'}
+            </IonButton>
+          </div>
+        )}
+
         <IonList inset>
-            {entries?.map(entry => (
+            <IonItem lines="none">
+                <IonTitle>History</IonTitle>
+            </IonItem>
+            {displayedEntries?.map(entry => (
                 <IonItem key={entry.id} button onClick={() => { setEntryToEdit(entry); setIsEntryModalOpen(true); }}>
                     <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0' }}>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
