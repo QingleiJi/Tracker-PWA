@@ -57,17 +57,14 @@ const MeasurementDetail: React.FC = () => {
            <MeasurementChart entries={entries || []} />
         </div>
 
-        {entries && entries.length > 5 && (
-          <div style={{ padding: '0 16px' }}>
-            <IonButton expand="block" fill="clear" onClick={() => setShowAll(!showAll)}>
-              {showAll ? 'Show Less' : 'Show All'}
-            </IonButton>
-          </div>
-        )}
-
         <IonList inset>
             <IonItem lines="none">
                 <IonTitle>History</IonTitle>
+                {entries && entries.length > 5 && (
+                    <IonButton fill="clear" onClick={() => setShowAll(!showAll)} slot="end">
+                        {showAll ? 'Show Less' : 'All'}
+                    </IonButton>
+                )}
             </IonItem>
             {displayedEntries?.map(entry => (
                 <IonItem key={entry.id} button onClick={() => { setEntryToEdit(entry); setIsEntryModalOpen(true); }}>
