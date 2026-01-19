@@ -8,9 +8,11 @@ import { format } from 'date-fns';
 
 interface Props {
   type: MeasurementType;
+  style?: React.CSSProperties;
+  className?: string;
 }
 
-const MeasurementTypeCard: React.FC<Props> = ({ type }) => {
+const MeasurementTypeCard: React.FC<Props> = ({ type, style, className }) => {
   const latestEntry = useLiveQuery(
     () => db.measurementEntries
       .where('typeId')
@@ -21,7 +23,7 @@ const MeasurementTypeCard: React.FC<Props> = ({ type }) => {
   , [type.id]);
 
   return (
-    <div className="scandi-card">
+    <div className={`scandi-card ${className || ''}`} style={style}>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <div className="scandi-title">{type.name}</div>
         <div className="scandi-subtitle">
