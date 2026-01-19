@@ -11,6 +11,16 @@ export class TrackerDatabase extends Dexie {
       measurementTypes: 'id',
       measurementEntries: 'id, typeId, date'
     });
+    this.version(2).stores({
+        measurementTypes: 'id, &slug', // Add unique index for slug
+    }).upgrade(tx => {
+        // Add a slug to existing measurement types
+        return tx.table('measurementTypes').toCollection().modify(type => {
+            if (type.name) {
+                type.slug = type.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+            }
+        });
+    });
   }
 }
 

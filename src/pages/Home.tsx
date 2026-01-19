@@ -92,7 +92,7 @@ const Home: React.FC = () => {
                             style={{ '--background': 'transparent', '--padding-start': 0, '--inner-padding-end': 0 }}
                             button
                             detail={false}
-                            onClick={() => history.push(`/measurement/${type.id}`)}
+                            onClick={() => history.push(`/${type.slug}`)}
                         >
                             <MeasurementTypeCard 
                                 type={type} 

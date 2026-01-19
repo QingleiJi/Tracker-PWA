@@ -28,17 +28,30 @@ const AddMeasurementTypeModal: React.FC<Props> = ({ isOpen, onDismiss }) => {
 
   const save = async () => {
       if (!name) return;
-      await db.measurementTypes.add({
-          id: uuidv4(),
-          name,
-          frequencyType,
-          hourFrequency: frequencyType === 'byHour' ? hourFrequency : undefined,
-          hourStartDate: frequencyType === 'byHour' ? new Date(hourStartTime) : undefined,
-          daysOfWeek: frequencyType === 'byDay' ? selectedDays : undefined,
-          reminderTime: frequencyType === 'byDay' ? new Date(reminderTime) : undefined,
-      });
-      reset();
-      onDismiss();
+
+      const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+
+      try {
+        await db.measurementTypes.add({
+            id: uuidv4(),
+            name,
+            slug,
+            frequencyType,
+            hourFrequency: frequencyType === 'byHour' ? hourFrequency : undefined,
+            hourStartDate: frequencyType === 'byHour' ? new Date(hourStartTime) : undefined,
+            daysOfWeek: frequencyType === 'byDay' ? selectedDays : undefined,
+            reminderTime: frequencyType === 'byDay' ? new Date(reminderTime) : undefined,
+        });
+        reset();
+        onDismiss();
+      } catch (error) {
+        if ((error as Error).name === 'ConstraintError') {
+            alert('A measurement with this name already exists.');
+        } else {
+            console.error('Failed to save measurement type:', error);
+            alert('An unexpected error occurred.');
+        }
+      }
   };
 
   return (

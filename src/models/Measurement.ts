@@ -11,6 +11,7 @@ export interface AxisConfig {
 export interface MeasurementType {
   id: string;
   name: string;
+  slug?: string;
   frequencyType: FrequencyType;
   hourFrequency?: number;
   hourStartDate?: Date;

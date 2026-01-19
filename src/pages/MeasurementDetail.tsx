@@ -10,9 +10,16 @@ import AddEntryModal from '../components/AddEntryModal';
 import { MeasurementEntry } from '../models/Measurement';
 
 const MeasurementDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const type = useLiveQuery(() => db.measurementTypes.get(id), [id]);
-  const entries = useLiveQuery(() => db.measurementEntries.where('typeId').equals(id).reverse().sortBy('date'), [id]);
+  const { slug } = useParams<{ slug: string }>();
+
+  // Fetch the measurement type by its slug
+  const type = useLiveQuery(() => db.measurementTypes.where('slug').equals(slug).first(), [slug]);
+
+  // Fetch entries only when the type (and thus type.id) is known
+  const entries = useLiveQuery(() => {
+    if (!type) return [];
+    return db.measurementEntries.where('typeId').equals(type.id).reverse().sortBy('date');
+  }, [type?.id]); // Rerun query if type.id changes
 
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [entryToEdit, setEntryToEdit] = useState<MeasurementEntry | undefined>(undefined);
@@ -21,14 +28,17 @@ const MeasurementDetail: React.FC = () => {
       db.measurementEntries.delete(entryId);
   };
 
-  if (!type) return <IonPage><IonContent>Loading...</IonContent></IonPage>;
+  if (!type) {
+    // This can be a loading state or a "not found" message after a timeout
+    return <IonPage><IonContent>Loading...</IonContent></IonPage>;
+  }
 
   return (
     <IonPage>
       <IonHeader translucent>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/home" />
+            <IonBackButton defaultHref="/tracker/" />
           </IonButtons>
           <IonTitle>{type.name}</IonTitle>
         </IonToolbar>
@@ -67,7 +77,7 @@ const MeasurementDetail: React.FC = () => {
         <AddEntryModal 
             isOpen={isEntryModalOpen} 
             onDismiss={() => { setIsEntryModalOpen(false); setEntryToEdit(undefined); }} 
-            typeId={id} 
+            typeId={type.id} 
             entryToEdit={entryToEdit}
         />
 

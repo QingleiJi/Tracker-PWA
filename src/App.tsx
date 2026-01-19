@@ -1,24 +1,20 @@
-import { Redirect, Route } from 'react-router-dom';
+import { Route, BrowserRouter } from 'react-router-dom';
 import { IonApp, IonRouterOutlet } from '@ionic/react';
-import { IonReactRouter } from '@ionic/react-router';
 import Home from './pages/Home';
 import MeasurementDetail from './pages/MeasurementDetail';
 
 const App: React.FC = () => (
   <IonApp>
-    <IonReactRouter>
+    <BrowserRouter basename="/tracker">
       <IonRouterOutlet>
-        <Route exact path="/home">
+        <Route exact path="/">
           <Home />
         </Route>
-        <Route exact path="/">
-          <Redirect to="/home" />
-        </Route>
-        <Route path="/measurement/:id">
+        <Route exact path="/:slug">
           <MeasurementDetail />
         </Route>
       </IonRouterOutlet>
-    </IonReactRouter>
+    </BrowserRouter>
   </IonApp>
 );
 
