@@ -19,6 +19,7 @@ Being a PWA, you can "install" it on your mobile or desktop device for a native-
 -   **Works Offline**: All your data is stored in your browser, so the app works even without an internet connection.
 -   **Private**: Your data stays on your device and is not sent to any server.
 -   **Installable**: As a PWA, you can add it to your home screen on mobile or install it as a desktop app.
+-   **Data Portability**: Easily upload and download your data. This allows you to transfer your tracking history between different devices, ensuring you have your data wherever you go.
 -   **Data Visualization**: See your progress with charts.
 -   **Customizable**: Track anything you can imagine by defining your own measurement types.
 
