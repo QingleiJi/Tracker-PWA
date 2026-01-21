@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonList, IonItem, IonInput, IonLabel, IonDatetimeButton, IonDatetime, IonSegment, IonSegmentButton, IonSelect, IonSelectOption } from '@ionic/react';
+import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonList, IonItem, IonInput } from '@ionic/react';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db/db';
-import { FrequencyType } from '../models/Measurement';
 
 interface Props {
   isOpen: boolean;
@@ -11,19 +10,9 @@ interface Props {
 
 const AddMeasurementTypeModal: React.FC<Props> = ({ isOpen, onDismiss }) => {
   const [name, setName] = useState('');
-  const [frequencyType, setFrequencyType] = useState<FrequencyType>('byHour');
-  const [hourFrequency, setHourFrequency] = useState<number>(3);
-  const [hourStartTime, setHourStartTime] = useState<string>(new Date().toISOString());
-  
-  // 1=Sun, 7=Sat
-  const [selectedDays, setSelectedDays] = useState<number[]>([]);
-  const [reminderTime, setReminderTime] = useState<string>(new Date().toISOString());
 
   const reset = () => {
     setName('');
-    setFrequencyType('byHour');
-    setHourFrequency(3);
-    setSelectedDays([]);
   };
 
   const save = async () => {
@@ -36,11 +25,7 @@ const AddMeasurementTypeModal: React.FC<Props> = ({ isOpen, onDismiss }) => {
             id: uuidv4(),
             name,
             slug,
-            frequencyType,
-            hourFrequency: frequencyType === 'byHour' ? hourFrequency : undefined,
-            hourStartDate: frequencyType === 'byHour' ? new Date(hourStartTime) : undefined,
-            daysOfWeek: frequencyType === 'byDay' ? selectedDays : undefined,
-            reminderTime: frequencyType === 'byDay' ? new Date(reminderTime) : undefined,
+            frequencyType: 'byDay',
         });
         reset();
         onDismiss();
@@ -68,48 +53,6 @@ const AddMeasurementTypeModal: React.FC<Props> = ({ isOpen, onDismiss }) => {
           <IonItem>
             <IonInput label="Name" labelPlacement="stacked" placeholder="e.g. Weight" value={name} onIonInput={e => setName(e.detail.value!)} />
           </IonItem>
-          
-          <IonItem lines="none" color="light">
-             <IonSegment value={frequencyType} onIonChange={e => setFrequencyType(e.detail.value as FrequencyType)}>
-                <IonSegmentButton value="byHour"><IonLabel>By Hour</IonLabel></IonSegmentButton>
-                <IonSegmentButton value="byDay"><IonLabel>By Day</IonLabel></IonSegmentButton>
-             </IonSegment>
-          </IonItem>
-
-          {frequencyType === 'byHour' && (
-             <>
-               <IonItem>
-                 <IonInput label="Every (hours)" labelPlacement="start" type="number" value={hourFrequency} onIonInput={e => setHourFrequency(parseInt(e.detail.value!, 10))} />
-               </IonItem>
-               <IonItem>
-                 <IonLabel>Start Time</IonLabel>
-                 <IonDatetimeButton datetime="starttime" />
-                 <IonModal keepContentsMounted={true}>
-                    <IonDatetime id="starttime" presentation="time" value={hourStartTime} onIonChange={e => setHourStartTime(e.detail.value as string)} />
-                 </IonModal>
-               </IonItem>
-             </>
-          )}
-
-          {frequencyType === 'byDay' && (
-             <>
-                <IonItem>
-                    <IonLabel>Days</IonLabel>
-                    <IonSelect multiple value={selectedDays} onIonChange={e => setSelectedDays(e.detail.value)}>
-                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
-                            <IonSelectOption key={i} value={i+1}>{day}</IonSelectOption>
-                        ))}
-                    </IonSelect>
-                </IonItem>
-                <IonItem>
-                 <IonLabel>Reminder</IonLabel>
-                 <IonDatetimeButton datetime="remindertime" />
-                 <IonModal keepContentsMounted={true}>
-                    <IonDatetime id="remindertime" presentation="time" value={reminderTime} onIonChange={e => setReminderTime(e.detail.value as string)} />
-                 </IonModal>
-               </IonItem>
-             </>
-          )}
         </IonList>
       </IonContent>
     </IonModal>
