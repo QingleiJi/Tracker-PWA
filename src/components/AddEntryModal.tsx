@@ -71,7 +71,7 @@ const AddEntryModal: React.FC<Props> = ({ isOpen, onDismiss, typeId, entryToEdit
                  </IonModal>
             </IonItem>
             <IonItem>
-                <IonInput label="Value" labelPlacement="fixed" type="number" placeholder="Enter value" value={value} onIonInput={e => setValue(e.detail.value!)} />
+                <IonInput label="Value" labelPlacement="fixed" type="number" placeholder="Enter value" value={value} onIonInput={e => setValue(e.detail.value!)} className="ion-text-right" />
             </IonItem>
             <IonItem>
                 <IonInput label="Note" labelPlacement="stacked" type="text" placeholder="Optional" value={note} onIonInput={e => setNote(e.detail.value!)} />
