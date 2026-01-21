@@ -71,11 +71,16 @@ const MeasurementDetail: React.FC = () => {
                     <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0' }}>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <span style={{ fontSize: 17, fontWeight: 500, color: 'var(--ion-text-color)' }}>
-                                {entry.value !== undefined ? entry.value : 'Entry'}
+                                {entry.value}
                             </span>
                             <span style={{ fontSize: 14, color: 'var(--ion-color-medium)', marginTop: 4 }}>
                                 {format(entry.date, 'MMM d, h:mm a')}
                             </span>
+                            {entry.note && (
+                                <span style={{ fontSize: 14, color: 'var(--ion-color-dark)', marginTop: 4 }}>
+                                    {entry.note}
+                                </span>
+                            )}
                         </div>
                         <IonButton fill="clear" color="medium" onClick={(e) => { e.stopPropagation(); deleteEntry(entry.id); }}>
                              <IonIcon icon={trash} slot="icon-only" />

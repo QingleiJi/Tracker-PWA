@@ -25,5 +25,6 @@ export interface MeasurementEntry {
   id: string;
   typeId: string;
   date: Date;
-  value?: number;
+  value: number;
+  note?: string;
 }
