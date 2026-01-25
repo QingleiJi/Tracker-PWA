@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { IonButton, IonButtons, IonContent, IonDatetime, IonDatetimeButton, IonHeader, IonInput, IonItem, IonLabel, IonList, IonModal, IonTitle, IonToggle, IonToolbar } from '@ionic/react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import type { AxisDomain } from 'recharts/types/util/types';
@@ -56,14 +56,28 @@ const buildTicks = (minValue: number, maxValue: number, step: number) => {
   return ticks;
 };
 
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+const formatNumber = (value: number, maxDecimals = 3) => value.toFixed(maxDecimals).replace(/\.?0+$/, '');
+
+const pickTickCount = (availablePx: number, minPixelsPerTick: number) => {
+  if (!Number.isFinite(availablePx) || availablePx <= 0) return 8;
+  const maxPossible = Math.max(2, Math.floor(availablePx / minPixelsPerTick));
+  if (maxPossible < 8) return maxPossible;
+  return Math.min(10, Math.max(8, maxPossible));
+};
+
 const MeasurementChart: React.FC<Props> = ({ entries }) => {
   if (!entries || entries.length === 0) return <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>No data</div>;
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
 
   const [isYAxisModalOpen, setIsYAxisModalOpen] = useState(false);
   const [isXAxisModalOpen, setIsXAxisModalOpen] = useState(false);
   const [yAuto, setYAuto] = useState(true);
   const [xAuto, setXAuto] = useState(true);
-  const [gridMode, setGridMode] = useState<'light' | 'strong' | 'off'>('light');
+  const [gridMode, setGridMode] = useState<'light' | 'strong' | 'bold' | 'off'>('light');
   const [yMin, setYMin] = useState<number | undefined>(undefined);
   const [yMax, setYMax] = useState<number | undefined>(undefined);
   const [yInterval, setYInterval] = useState<number | undefined>(undefined);
@@ -76,6 +90,18 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
   const [xStartInput, setXStartInput] = useState('');
   const [xEndInput, setXEndInput] = useState('');
   const [xIntervalInput, setXIntervalInput] = useState('');
+
+  useEffect(() => {
+    if (!containerRef.current) return undefined;
+    const observer = new ResizeObserver(entriesList => {
+      for (const entry of entriesList) {
+        const { width, height } = entry.contentRect;
+        setChartSize({ width, height });
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const data = entries.map(e => ({
       ...e,
@@ -91,24 +117,38 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
   }
 
   const openYAxisSettings = () => {
-    setYMinInput(yMin !== undefined ? String(yMin) : '');
-    setYMaxInput(yMax !== undefined ? String(yMax) : '');
-    setYIntervalInput(yInterval !== undefined ? String(yInterval) : '');
+    const autoMin = typeof yAutoConfig.domain[0] === 'number' ? yAutoConfig.domain[0] : undefined;
+    const autoMax = typeof yAutoConfig.domain[1] === 'number' ? yAutoConfig.domain[1] : undefined;
+    const autoInterval = yAutoConfig.ticks && yAutoConfig.ticks.length > 1
+      ? yAutoConfig.ticks[1] - yAutoConfig.ticks[0]
+      : undefined;
+
+    setYMinInput(yAuto ? (autoMin !== undefined ? formatNumber(autoMin) : '') : (yMin !== undefined ? String(yMin) : ''));
+    setYMaxInput(yAuto ? (autoMax !== undefined ? formatNumber(autoMax) : '') : (yMax !== undefined ? String(yMax) : ''));
+    setYIntervalInput(yAuto ? (autoInterval !== undefined ? formatNumber(autoInterval) : '') : (yInterval !== undefined ? String(yInterval) : ''));
     setIsYAxisModalOpen(true);
   };
 
   const openXAxisSettings = () => {
-    setXStartInput(xStart !== undefined ? new Date(xStart).toISOString() : '');
-    setXEndInput(xEnd !== undefined ? new Date(xEnd).toISOString() : '');
-    setXIntervalInput(xIntervalDays !== undefined ? String(xIntervalDays) : '');
+    const autoStart = typeof xAutoConfig.domain[0] === 'number' ? xAutoConfig.domain[0] : undefined;
+    const autoEnd = typeof xAutoConfig.domain[1] === 'number' ? xAutoConfig.domain[1] : undefined;
+    const autoIntervalDays = xAutoConfig.stepMs ? xAutoConfig.stepMs / (24 * 60 * 60 * 1000) : undefined;
+
+    setXStartInput(xAuto ? (autoStart !== undefined ? new Date(autoStart).toISOString() : '') : (xStart !== undefined ? new Date(xStart).toISOString() : ''));
+    setXEndInput(xAuto ? (autoEnd !== undefined ? new Date(autoEnd).toISOString() : '') : (xEnd !== undefined ? new Date(xEnd).toISOString() : ''));
+    setXIntervalInput(xAuto ? (autoIntervalDays !== undefined ? formatNumber(autoIntervalDays) : '') : (xIntervalDays !== undefined ? String(xIntervalDays) : ''));
     setIsXAxisModalOpen(true);
   };
 
   const cycleGrid = () => {
-    setGridMode(prev => (prev === 'light' ? 'strong' : prev === 'strong' ? 'off' : 'light'));
+    setGridMode(prev => (prev === 'light' ? 'strong' : prev === 'strong' ? 'bold' : prev === 'bold' ? 'off' : 'light'));
   };
 
-  const gridOpacity = gridMode === 'strong' ? 0.9 : 0.45;
+  const gridStyle = useMemo(() => {
+    if (gridMode === 'bold') return { stroke: '#9aa4af', strokeOpacity: 0.95, strokeWidth: 1.5, strokeDasharray: '2 2' };
+    if (gridMode === 'strong') return { stroke: '#c4cbd3', strokeOpacity: 0.75, strokeWidth: 1, strokeDasharray: '3 3' };
+    return { stroke: '#dfe3e8', strokeOpacity: 0.45, strokeWidth: 1, strokeDasharray: '3 3' };
+  }, [gridMode]);
 
   const chartData = useMemo(() => {
     if (xAuto) return data;
@@ -127,25 +167,62 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
   const timeMin = chartData.length ? chartData[0].time : data[0].time;
   const timeMax = chartData.length ? chartData[chartData.length - 1].time : data[data.length - 1].time;
 
+  const yLabelChars = useMemo(() => {
+    if (!Number.isFinite(dataMin) || !Number.isFinite(dataMax)) return 3;
+    const maxAbs = Math.max(Math.abs(dataMin), Math.abs(dataMax));
+    const precision = yInterval !== undefined ? Math.min(3, Math.max(0, (yInterval.toString().split('.')[1] || '').length)) : 2;
+    const text = maxAbs.toFixed(precision).replace(/\.?0+$/, '');
+    const hasNegative = dataMin < 0;
+    return text.length + (hasNegative ? 1 : 0);
+  }, [dataMax, dataMin, yInterval]);
+
+  const yAxisWidth = useMemo(() => {
+    const approxCharWidth = 7;
+    return clamp(yLabelChars * approxCharWidth + 12, 40, 70);
+  }, [yLabelChars]);
+
+  const chartMargins = useMemo(() => {
+    const width = chartSize.width || 320;
+    const height = chartSize.height || 300;
+    const side = clamp(Math.round(width * 0.02), 6, 14);
+    const top = clamp(Math.round(height * 0.05), 8, 16);
+    const bottom = clamp(Math.round(height * 0.09), 16, 28);
+    return { top, right: side, left: side, bottom };
+  }, [chartSize.height, chartSize.width]);
+
+  const targetYTicks = useMemo(() => {
+    const available = (chartSize.height || 300) - chartMargins.top - chartMargins.bottom;
+    return pickTickCount(available, 28);
+  }, [chartMargins.bottom, chartMargins.top, chartSize.height]);
+
+  const targetXTicks = useMemo(() => {
+    const width = chartSize.width || 320;
+    const available = width - yAxisWidth - chartMargins.left - chartMargins.right;
+    const rangeMs = timeMax - timeMin;
+    const usesTime = Number.isFinite(rangeMs) && rangeMs / 8 < 24 * 60 * 60 * 1000;
+    const labelWidth = usesTime ? 88 : 60;
+    return pickTickCount(available, labelWidth + 10);
+  }, [chartMargins.left, chartMargins.right, chartSize.width, timeMax, timeMin, yAxisWidth]);
+
   const yAutoConfig = useMemo(() => {
     if (!Number.isFinite(dataMin) || !Number.isFinite(dataMax)) return { domain: ['dataMin', 'dataMax'] as AxisDomain, ticks: undefined as number[] | undefined };
     const range = dataMax - dataMin;
-    const step = niceStep(range === 0 ? 1 : range, 6);
+    const step = niceStep(range === 0 ? 1 : range, targetYTicks);
     const niceMin = range === 0 ? dataMin - step : Math.floor(dataMin / step) * step;
     const niceMax = range === 0 ? dataMax + step : Math.ceil(dataMax / step) * step;
     const ticks = buildTicks(niceMin, niceMax, step);
     return { domain: [niceMin, niceMax] as AxisDomain, ticks };
-  }, [dataMax, dataMin]);
+  }, [dataMax, dataMin, targetYTicks]);
 
   const xAutoConfig = useMemo(() => {
     if (!Number.isFinite(timeMin) || !Number.isFinite(timeMax) || timeMax <= timeMin) return { domain: ['dataMin', 'dataMax'] as AxisDomain, ticks: undefined as number[] | undefined, stepMs: TIME_STEPS_MS[0] };
     const range = timeMax - timeMin;
-    const stepMs = pickTimeStep(range, 8);
+    const stepMs = pickTimeStep(range, targetXTicks);
     const niceMin = Math.floor(timeMin / stepMs) * stepMs;
     const niceMax = Math.ceil(timeMax / stepMs) * stepMs;
     const ticks = buildTicks(niceMin, niceMax, stepMs);
     return { domain: [niceMin, niceMax] as AxisDomain, ticks, stepMs };
-  }, [timeMax, timeMin]);
+  }, [targetXTicks, timeMax, timeMin]);
 
   const yDomain = useMemo<AxisDomain>(() => {
     if (yAuto) return yAutoConfig.domain;
@@ -256,16 +333,16 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
 
   return (
     <>
-      <div style={{ width: '100%', height: 300, background: 'white', borderRadius: 16, padding: '16px 0', marginBottom: 16, position: 'relative' }}>
+      <div ref={containerRef} style={{ width: '100%', height: 300, background: 'white', borderRadius: 16, padding: '12px 0 8px', marginBottom: 16, position: 'relative' }}>
         <div style={{ position: 'absolute', top: 6, right: 8, zIndex: 2 }}>
           <IonButton size="small" fill="clear" onClick={cycleGrid} style={{ fontSize: 11 }}>
             Grid: {gridMode}
           </IonButton>
         </div>
         <ResponsiveContainer>
-          <LineChart data={chartData} margin={{ top: 10, right: 20, left: 12, bottom: 16 }}>
+          <LineChart data={chartData} margin={chartMargins}>
             {gridMode !== 'off' && (
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#dfe3e8" strokeOpacity={gridOpacity} />
+              <CartesianGrid vertical={true} strokeDasharray={gridStyle.strokeDasharray} stroke={gridStyle.stroke} strokeOpacity={gridStyle.strokeOpacity} strokeWidth={gridStyle.strokeWidth} />
             )}
             <XAxis 
                 dataKey="time"
@@ -274,9 +351,9 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
                 ticks={xTicks}
                 tickLine={false} 
                 axisLine={false} 
-                tickMargin={12}
+                tickMargin={clamp(Math.round((chartSize.height || 300) * 0.04), 6, 12)}
                 tick={XAxisTick}
-                height={30}
+                height={clamp(Math.round((chartSize.height || 300) * 0.12), 26, 36)}
                 allowDataOverflow={true}
             />
             <YAxis 
@@ -284,7 +361,7 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
                 ticks={yTicks}
                 axisLine={false} 
                 tickLine={false} 
-                width={52}
+                width={yAxisWidth}
                 tick={YAxisTick}
                 allowDataOverflow={true}
             />
