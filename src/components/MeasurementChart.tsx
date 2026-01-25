@@ -96,6 +96,13 @@ const pickTickCount = (availablePx: number, minPixelsPerTick: number) => {
   return Math.min(10, Math.max(8, maxPossible));
 };
 
+const pickXAxisTickCount = (availablePx: number, labelWidth: number, containerWidth: number) => {
+  if (!Number.isFinite(availablePx) || availablePx <= 0) return 7;
+  const approx = Math.max(2, Math.floor(availablePx / labelWidth));
+  if (containerWidth < 480) return clamp(approx, 5, 6);
+  return clamp(approx, 7, 10);
+};
+
 const MeasurementChart: React.FC<Props> = ({ entries }) => {
   if (!entries || entries.length === 0) return <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>No data</div>;
 
@@ -106,7 +113,7 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
   const [isXAxisModalOpen, setIsXAxisModalOpen] = useState(false);
   const [yAuto, setYAuto] = useState(true);
   const [xAuto, setXAuto] = useState(true);
-  const [gridMode, setGridMode] = useState<'light' | 'strong' | 'bold' | 'off'>('light');
+  const [gridMode, setGridMode] = useState<'light' | 'strong' | 'bold' | 'off'>('bold');
   const [yMin, setYMin] = useState<number | undefined>(undefined);
   const [yMax, setYMax] = useState<number | undefined>(undefined);
   const [yInterval, setYInterval] = useState<number | undefined>(undefined);
@@ -231,7 +238,7 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
     const rangeMs = timeMax - timeMin;
     const usesTime = Number.isFinite(rangeMs) && rangeMs / 8 < 24 * 60 * 60 * 1000;
     const labelWidth = usesTime ? 88 : 60;
-    return pickTickCount(available, labelWidth + 10);
+    return pickXAxisTickCount(available, labelWidth + 10, width);
   }, [chartMargins.left, chartMargins.right, chartSize.width, timeMax, timeMin, yAxisWidth]);
 
   const yAutoConfig = useMemo(() => {
@@ -250,8 +257,11 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
     const stepMs = pickTimeStep(range, targetXTicks);
     const niceMin = Math.floor(timeMin / stepMs) * stepMs;
     const niceMax = Math.ceil(timeMax / stepMs) * stepMs;
-    const ticks = buildTicks(niceMin, niceMax, stepMs);
-    return { domain: [niceMin, niceMax] as AxisDomain, ticks, stepMs };
+    const pad = clamp(range * 0.04, stepMs * 0.15, stepMs * 0.6);
+    const domainMin = timeMin - pad;
+    const domainMax = timeMax + pad;
+    const ticks = buildTicks(niceMin, niceMax, stepMs)?.filter(value => value >= domainMin && value <= domainMax);
+    return { domain: [domainMin, domainMax] as AxisDomain, ticks, stepMs };
   }, [targetXTicks, timeMax, timeMin]);
 
   const yDomain = useMemo<AxisDomain>(() => {
@@ -375,13 +385,23 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
         <ResponsiveContainer>
           <LineChart data={chartData} margin={chartMargins}>
             {gridMode !== 'off' && (
-              <CartesianGrid vertical={true} strokeDasharray={gridStyle.strokeDasharray} stroke={gridStyle.stroke} strokeOpacity={gridStyle.strokeOpacity} strokeWidth={gridStyle.strokeWidth} />
+              <CartesianGrid
+                vertical={true}
+                syncWithTicks={true}
+                verticalValues={xTicks}
+                horizontalValues={yTicks}
+                strokeDasharray={gridStyle.strokeDasharray}
+                stroke={gridStyle.stroke}
+                strokeOpacity={gridStyle.strokeOpacity}
+                strokeWidth={gridStyle.strokeWidth}
+              />
             )}
             <XAxis 
                 dataKey="time"
                 type="number"
                 domain={xDomain}
                 ticks={xTicks}
+                interval={0}
                 tickLine={false} 
                 axisLine={false} 
                 tickMargin={clamp(Math.round((chartSize.height || 300) * 0.04), 6, 12)}
@@ -392,6 +412,7 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
             <YAxis 
                 domain={yDomain}
                 ticks={yTicks}
+                interval={0}
                 axisLine={false} 
                 tickLine={false} 
                 width={yAxisWidth}
@@ -520,7 +541,11 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
                 value={xIntervalInput}
                 disabled={xAuto}
                 placeholder="Select interval"
-                onIonChange={e => setXIntervalInput(e.detail.value ?? '')}
+                interface="popover"
+                onIonChange={e => {
+                  const nextValue = e.detail.value ?? '';
+                  setXIntervalInput(nextValue);
+                }}
                 className="ion-text-right"
                 slot="end"
               >
