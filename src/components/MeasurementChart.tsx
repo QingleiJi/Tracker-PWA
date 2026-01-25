@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { IonButton, IonButtons, IonContent, IonDatetime, IonDatetimeButton, IonHeader, IonInput, IonItem, IonLabel, IonList, IonModal, IonTitle, IonToggle, IonToolbar } from '@ionic/react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import type { AxisDomain } from 'recharts/types/util/types';
 import { MeasurementEntry } from '../models/Measurement';
 import { format } from 'date-fns';
 
@@ -127,33 +128,33 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
   const timeMax = chartData.length ? chartData[chartData.length - 1].time : data[data.length - 1].time;
 
   const yAutoConfig = useMemo(() => {
-    if (!Number.isFinite(dataMin) || !Number.isFinite(dataMax)) return { domain: ['dataMin', 'dataMax'] as const, ticks: undefined as number[] | undefined };
+    if (!Number.isFinite(dataMin) || !Number.isFinite(dataMax)) return { domain: ['dataMin', 'dataMax'] as AxisDomain, ticks: undefined as number[] | undefined };
     const range = dataMax - dataMin;
     const step = niceStep(range === 0 ? 1 : range, 6);
     const niceMin = range === 0 ? dataMin - step : Math.floor(dataMin / step) * step;
     const niceMax = range === 0 ? dataMax + step : Math.ceil(dataMax / step) * step;
     const ticks = buildTicks(niceMin, niceMax, step);
-    return { domain: [niceMin, niceMax] as const, ticks };
+    return { domain: [niceMin, niceMax] as AxisDomain, ticks };
   }, [dataMax, dataMin]);
 
   const xAutoConfig = useMemo(() => {
-    if (!Number.isFinite(timeMin) || !Number.isFinite(timeMax) || timeMax <= timeMin) return { domain: ['dataMin', 'dataMax'] as const, ticks: undefined as number[] | undefined, stepMs: TIME_STEPS_MS[0] };
+    if (!Number.isFinite(timeMin) || !Number.isFinite(timeMax) || timeMax <= timeMin) return { domain: ['dataMin', 'dataMax'] as AxisDomain, ticks: undefined as number[] | undefined, stepMs: TIME_STEPS_MS[0] };
     const range = timeMax - timeMin;
     const stepMs = pickTimeStep(range, 8);
     const niceMin = Math.floor(timeMin / stepMs) * stepMs;
     const niceMax = Math.ceil(timeMax / stepMs) * stepMs;
     const ticks = buildTicks(niceMin, niceMax, stepMs);
-    return { domain: [niceMin, niceMax] as const, ticks, stepMs };
+    return { domain: [niceMin, niceMax] as AxisDomain, ticks, stepMs };
   }, [timeMax, timeMin]);
 
-  const yDomain = useMemo(() => {
+  const yDomain = useMemo<AxisDomain>(() => {
     if (yAuto) return yAutoConfig.domain;
-    return [yMin ?? 'dataMin', yMax ?? 'dataMax'];
+    return [yMin ?? 'dataMin', yMax ?? 'dataMax'] as AxisDomain;
   }, [yAuto, yAutoConfig.domain, yMin, yMax]);
 
-  const xDomain = useMemo(() => {
+  const xDomain = useMemo<AxisDomain>(() => {
     if (xAuto) return xAutoConfig.domain;
-    return [xStart ?? 'dataMin', xEnd ?? 'dataMax'];
+    return [xStart ?? 'dataMin', xEnd ?? 'dataMax'] as AxisDomain;
   }, [xAuto, xAutoConfig.domain, xEnd, xStart]);
 
   const yTicks = useMemo(() => {
