@@ -60,6 +60,17 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 
 const formatNumber = (value: number, maxDecimals = 3) => value.toFixed(maxDecimals).replace(/\.?0+$/, '');
 
+const getNumericDomain = (domain: AxisDomain) => {
+  if (Array.isArray(domain)) {
+    const [min, max] = domain;
+    return {
+      min: typeof min === 'number' ? min : undefined,
+      max: typeof max === 'number' ? max : undefined
+    };
+  }
+  return { min: undefined, max: undefined };
+};
+
 const pickTickCount = (availablePx: number, minPixelsPerTick: number) => {
   if (!Number.isFinite(availablePx) || availablePx <= 0) return 8;
   const maxPossible = Math.max(2, Math.floor(availablePx / minPixelsPerTick));
@@ -117,8 +128,7 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
   }
 
   const openYAxisSettings = () => {
-    const autoMin = typeof yAutoConfig.domain[0] === 'number' ? yAutoConfig.domain[0] : undefined;
-    const autoMax = typeof yAutoConfig.domain[1] === 'number' ? yAutoConfig.domain[1] : undefined;
+    const { min: autoMin, max: autoMax } = getNumericDomain(yAutoConfig.domain);
     const autoInterval = yAutoConfig.ticks && yAutoConfig.ticks.length > 1
       ? yAutoConfig.ticks[1] - yAutoConfig.ticks[0]
       : undefined;
@@ -130,8 +140,7 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
   };
 
   const openXAxisSettings = () => {
-    const autoStart = typeof xAutoConfig.domain[0] === 'number' ? xAutoConfig.domain[0] : undefined;
-    const autoEnd = typeof xAutoConfig.domain[1] === 'number' ? xAutoConfig.domain[1] : undefined;
+    const { min: autoStart, max: autoEnd } = getNumericDomain(xAutoConfig.domain);
     const autoIntervalDays = xAutoConfig.stepMs ? xAutoConfig.stepMs / (24 * 60 * 60 * 1000) : undefined;
 
     setXStartInput(xAuto ? (autoStart !== undefined ? new Date(autoStart).toISOString() : '') : (xStart !== undefined ? new Date(xStart).toISOString() : ''));
