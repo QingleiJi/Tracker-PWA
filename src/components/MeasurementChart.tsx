@@ -142,10 +142,11 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
   const openXAxisSettings = () => {
     const { min: autoStart, max: autoEnd } = getNumericDomain(xAutoConfig.domain);
     const autoIntervalDays = xAutoConfig.stepMs ? xAutoConfig.stepMs / (24 * 60 * 60 * 1000) : undefined;
+    const autoIntervalValue = autoIntervalDays !== undefined ? new Date(autoIntervalDays * 24 * 60 * 60 * 1000).toISOString() : '';
 
     setXStartInput(xAuto ? (autoStart !== undefined ? new Date(autoStart).toISOString() : '') : (xStart !== undefined ? new Date(xStart).toISOString() : ''));
     setXEndInput(xAuto ? (autoEnd !== undefined ? new Date(autoEnd).toISOString() : '') : (xEnd !== undefined ? new Date(xEnd).toISOString() : ''));
-    setXIntervalInput(xAuto ? (autoIntervalDays !== undefined ? formatNumber(autoIntervalDays) : '') : (xIntervalDays !== undefined ? String(xIntervalDays) : ''));
+    setXIntervalInput(xAuto ? autoIntervalValue : (xIntervalDays !== undefined ? new Date(xIntervalDays * 24 * 60 * 60 * 1000).toISOString() : ''));
     setIsXAxisModalOpen(true);
   };
 
@@ -299,7 +300,8 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
   const saveXAxisSettings = () => {
     const nextXStart = xStartInput.trim() === '' ? undefined : new Date(xStartInput);
     const nextXEnd = xEndInput.trim() === '' ? undefined : new Date(xEndInput);
-    const nextXInterval = xIntervalInput.trim() === '' ? undefined : Number(xIntervalInput);
+    const nextXIntervalDate = xIntervalInput.trim() === '' ? undefined : new Date(xIntervalInput);
+    const nextXInterval = nextXIntervalDate ? nextXIntervalDate.getTime() / (24 * 60 * 60 * 1000) : undefined;
 
     if (!xAuto) {
       if ((nextXStart && Number.isNaN(nextXStart.getTime())) || (nextXEnd && Number.isNaN(nextXEnd.getTime()))) {
@@ -310,8 +312,12 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
         alert('End date must be after start date.');
         return;
       }
-      if (nextXInterval !== undefined && (Number.isNaN(nextXInterval) || nextXInterval <= 0)) {
-        alert('X interval must be a positive number of days.');
+      if (nextXIntervalDate && Number.isNaN(nextXIntervalDate.getTime())) {
+        alert('Interval must be a valid time.');
+        return;
+      }
+      if (nextXInterval !== undefined && nextXInterval <= 0) {
+        alert('Interval must be a positive time.');
         return;
       }
     }
@@ -414,7 +420,7 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
               </IonToggle>
             </IonItem>
             <IonItem>
-              <IonLabel>Y min (auto if blank)</IonLabel>
+              <IonLabel>Min</IonLabel>
               <IonInput
                 inputMode="decimal"
                 value={yMinInput}
@@ -424,7 +430,7 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel>Y max (auto if blank)</IonLabel>
+              <IonLabel>Max</IonLabel>
               <IonInput
                 inputMode="decimal"
                 value={yMaxInput}
@@ -434,7 +440,7 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel>Y interval (auto if blank)</IonLabel>
+              <IonLabel>Interval</IonLabel>
               <IonInput
                 inputMode="decimal"
                 value={yIntervalInput}
@@ -467,7 +473,7 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
               </IonToggle>
             </IonItem>
             <IonItem>
-              <IonLabel>Start date</IonLabel>
+              <IonLabel>Start</IonLabel>
               <IonDatetimeButton datetime="xstart" disabled={xAuto} />
               <IonModal keepContentsMounted={true}>
                 <IonDatetime
@@ -479,7 +485,7 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
               </IonModal>
             </IonItem>
             <IonItem>
-              <IonLabel>End date</IonLabel>
+              <IonLabel>End</IonLabel>
               <IonDatetimeButton datetime="xend" disabled={xAuto} />
               <IonModal keepContentsMounted={true}>
                 <IonDatetime
@@ -491,14 +497,17 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
               </IonModal>
             </IonItem>
             <IonItem>
-              <IonLabel>X interval (days, auto if blank)</IonLabel>
-              <IonInput
-                inputMode="decimal"
-                value={xIntervalInput}
-                onIonInput={e => setXIntervalInput(e.detail.value ?? '')}
-                disabled={xAuto}
-                className="ion-text-right"
-              />
+              <IonLabel>Interval</IonLabel>
+              <IonDatetimeButton datetime="xinterval" disabled={xAuto} />
+              <IonModal keepContentsMounted={true}>
+                <IonDatetime
+                  id="xinterval"
+                  presentation="date-time"
+                  value={xIntervalInput || undefined}
+                  onIonChange={e => setXIntervalInput(e.detail.value as string)}
+                  min="1970-01-01T00:00:00"
+                />
+              </IonModal>
             </IonItem>
           </IonList>
         </IonContent>
