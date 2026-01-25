@@ -36,7 +36,13 @@ const X_INTERVAL_OPTIONS = [
   { label: '2 hours', ms: 2 * 60 * 60 * 1000 },
   { label: '6 hours', ms: 6 * 60 * 60 * 1000 },
   { label: '12 hours', ms: 12 * 60 * 60 * 1000 },
-  { label: '1 day', ms: 24 * 60 * 60 * 1000 }
+  { label: '1 day', ms: 24 * 60 * 60 * 1000 },
+  { label: '2 days', ms: 2 * 24 * 60 * 60 * 1000 },
+  { label: '3 days', ms: 3 * 24 * 60 * 60 * 1000 },
+  { label: '5 days', ms: 5 * 24 * 60 * 60 * 1000 },
+  { label: '7 days', ms: 7 * 24 * 60 * 60 * 1000 },
+  { label: '14 days', ms: 14 * 24 * 60 * 60 * 1000 },
+  { label: '30 days', ms: 30 * 24 * 60 * 60 * 1000 }
 ];
 
 const niceStep = (range: number, targetTicks: number) => {
@@ -515,6 +521,8 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
                 disabled={xAuto}
                 placeholder="Select interval"
                 onIonChange={e => setXIntervalInput(e.detail.value ?? '')}
+                className="ion-text-right"
+                slot="end"
               >
                 {X_INTERVAL_OPTIONS.map(option => (
                   <IonSelectOption key={option.ms} value={String(option.ms)}>
