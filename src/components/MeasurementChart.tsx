@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { IonButton, IonButtons, IonContent, IonDatetime, IonDatetimeButton, IonHeader, IonInput, IonItem, IonLabel, IonList, IonModal, IonTitle, IonToggle, IonToolbar } from '@ionic/react';
+import { IonButton, IonButtons, IonContent, IonDatetime, IonDatetimeButton, IonHeader, IonInput, IonItem, IonLabel, IonList, IonModal, IonSelect, IonSelectOption, IonTitle, IonToggle, IonToolbar } from '@ionic/react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import type { AxisDomain } from 'recharts/types/util/types';
 import { MeasurementEntry } from '../models/Measurement';
@@ -25,6 +25,18 @@ const TIME_STEPS_MS = [
   7 * 24 * 60 * 60 * 1000,
   14 * 24 * 60 * 60 * 1000,
   30 * 24 * 60 * 60 * 1000
+];
+
+const X_INTERVAL_OPTIONS = [
+  { label: '1 minute', ms: 60 * 1000 },
+  { label: '5 minutes', ms: 5 * 60 * 1000 },
+  { label: '15 minutes', ms: 15 * 60 * 1000 },
+  { label: '30 minutes', ms: 30 * 60 * 1000 },
+  { label: '1 hour', ms: 60 * 60 * 1000 },
+  { label: '2 hours', ms: 2 * 60 * 60 * 1000 },
+  { label: '6 hours', ms: 6 * 60 * 60 * 1000 },
+  { label: '12 hours', ms: 12 * 60 * 60 * 1000 },
+  { label: '1 day', ms: 24 * 60 * 60 * 1000 }
 ];
 
 const niceStep = (range: number, targetTicks: number) => {
@@ -94,7 +106,7 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
   const [yInterval, setYInterval] = useState<number | undefined>(undefined);
   const [xStart, setXStart] = useState<number | undefined>(undefined);
   const [xEnd, setXEnd] = useState<number | undefined>(undefined);
-  const [xIntervalDays, setXIntervalDays] = useState<number | undefined>(undefined);
+  const [xIntervalMs, setXIntervalMs] = useState<number | undefined>(undefined);
   const [yMinInput, setYMinInput] = useState('');
   const [yMaxInput, setYMaxInput] = useState('');
   const [yIntervalInput, setYIntervalInput] = useState('');
@@ -141,12 +153,14 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
 
   const openXAxisSettings = () => {
     const { min: autoStart, max: autoEnd } = getNumericDomain(xAutoConfig.domain);
-    const autoIntervalDays = xAutoConfig.stepMs ? xAutoConfig.stepMs / (24 * 60 * 60 * 1000) : undefined;
-    const autoIntervalValue = autoIntervalDays !== undefined ? new Date(autoIntervalDays * 24 * 60 * 60 * 1000).toISOString() : '';
+    const autoIntervalMs = xAutoConfig.stepMs;
+    const intervalValue = autoIntervalMs !== undefined && X_INTERVAL_OPTIONS.some(option => option.ms === autoIntervalMs)
+      ? String(autoIntervalMs)
+      : '';
 
     setXStartInput(xAuto ? (autoStart !== undefined ? new Date(autoStart).toISOString() : '') : (xStart !== undefined ? new Date(xStart).toISOString() : ''));
     setXEndInput(xAuto ? (autoEnd !== undefined ? new Date(autoEnd).toISOString() : '') : (xEnd !== undefined ? new Date(xEnd).toISOString() : ''));
-    setXIntervalInput(xAuto ? autoIntervalValue : (xIntervalDays !== undefined ? new Date(xIntervalDays * 24 * 60 * 60 * 1000).toISOString() : ''));
+    setXIntervalInput(xAuto ? intervalValue : (xIntervalMs !== undefined ? String(xIntervalMs) : ''));
     setIsXAxisModalOpen(true);
   };
 
@@ -257,19 +271,18 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
 
   const xTicks = useMemo(() => {
     if (xAuto) return xAutoConfig.ticks;
-    if (xIntervalDays === undefined) return undefined;
-    if (xIntervalDays <= 0) return undefined;
-    const intervalMs = xIntervalDays * 24 * 60 * 60 * 1000;
+    if (xIntervalMs === undefined) return undefined;
+    if (xIntervalMs <= 0) return undefined;
     const minValue = xStart ?? timeMin;
     const maxValue = xEnd ?? timeMax;
-    return buildTicks(minValue, maxValue, intervalMs);
-  }, [timeMax, timeMin, xAuto, xAutoConfig.ticks, xEnd, xIntervalDays, xStart]);
+    return buildTicks(minValue, maxValue, xIntervalMs);
+  }, [timeMax, timeMin, xAuto, xAutoConfig.ticks, xEnd, xIntervalMs, xStart]);
 
   const xLabelFormat = useMemo(() => {
     if (xAuto) return xAutoConfig.stepMs >= 24 * 60 * 60 * 1000 ? 'MMM d' : 'MMM d, h:mm a';
-    if (xIntervalDays !== undefined && xIntervalDays < 1) return 'MMM d, h:mm a';
+    if (xIntervalMs !== undefined && xIntervalMs < 24 * 60 * 60 * 1000) return 'MMM d, h:mm a';
     return 'MMM d';
-  }, [xAuto, xAutoConfig.stepMs, xIntervalDays]);
+  }, [xAuto, xAutoConfig.stepMs, xIntervalMs]);
 
   const saveYAxisSettings = () => {
     const nextMin = yMinInput.trim() === '' ? undefined : Number(yMinInput);
@@ -300,8 +313,7 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
   const saveXAxisSettings = () => {
     const nextXStart = xStartInput.trim() === '' ? undefined : new Date(xStartInput);
     const nextXEnd = xEndInput.trim() === '' ? undefined : new Date(xEndInput);
-    const nextXIntervalDate = xIntervalInput.trim() === '' ? undefined : new Date(xIntervalInput);
-    const nextXInterval = nextXIntervalDate ? nextXIntervalDate.getTime() / (24 * 60 * 60 * 1000) : undefined;
+    const nextXIntervalMs = xIntervalInput.trim() === '' ? undefined : Number(xIntervalInput);
 
     if (!xAuto) {
       if ((nextXStart && Number.isNaN(nextXStart.getTime())) || (nextXEnd && Number.isNaN(nextXEnd.getTime()))) {
@@ -312,11 +324,11 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
         alert('End date must be after start date.');
         return;
       }
-      if (nextXIntervalDate && Number.isNaN(nextXIntervalDate.getTime())) {
+      if (nextXIntervalMs !== undefined && Number.isNaN(nextXIntervalMs)) {
         alert('Interval must be a valid time.');
         return;
       }
-      if (nextXInterval !== undefined && nextXInterval <= 0) {
+      if (nextXIntervalMs !== undefined && nextXIntervalMs <= 0) {
         alert('Interval must be a positive time.');
         return;
       }
@@ -324,7 +336,7 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
 
     setXStart(nextXStart ? nextXStart.getTime() : undefined);
     setXEnd(nextXEnd ? nextXEnd.getTime() : undefined);
-    setXIntervalDays(nextXInterval);
+    setXIntervalMs(nextXIntervalMs);
     setIsXAxisModalOpen(false);
   };
 
@@ -498,16 +510,18 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
             </IonItem>
             <IonItem>
               <IonLabel>Interval</IonLabel>
-              <IonDatetimeButton datetime="xinterval" disabled={xAuto} />
-              <IonModal keepContentsMounted={true}>
-                <IonDatetime
-                  id="xinterval"
-                  presentation="date-time"
-                  value={xIntervalInput || undefined}
-                  onIonChange={e => setXIntervalInput(e.detail.value as string)}
-                  min="1970-01-01T00:00:00"
-                />
-              </IonModal>
+              <IonSelect
+                value={xIntervalInput}
+                disabled={xAuto}
+                placeholder="Select interval"
+                onIonChange={e => setXIntervalInput(e.detail.value ?? '')}
+              >
+                {X_INTERVAL_OPTIONS.map(option => (
+                  <IonSelectOption key={option.ms} value={String(option.ms)}>
+                    {option.label}
+                  </IonSelectOption>
+                ))}
+              </IonSelect>
             </IonItem>
           </IonList>
         </IonContent>
