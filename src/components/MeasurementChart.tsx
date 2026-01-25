@@ -398,9 +398,11 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
         <IonHeader>
           <IonToolbar>
             <IonTitle>Y Axis Settings</IonTitle>
-            <IonButtons slot="end">
+            <IonButtons slot="start">
               <IonButton onClick={() => setIsYAxisModalOpen(false)}>Cancel</IonButton>
-              <IonButton strong onClick={saveYAxisSettings}>Apply</IonButton>
+            </IonButtons>
+            <IonButtons slot="end">
+              <IonButton strong onClick={saveYAxisSettings}>Save</IonButton>
             </IonButtons>
           </IonToolbar>
         </IonHeader>
@@ -412,33 +414,33 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
               </IonToggle>
             </IonItem>
             <IonItem>
+              <IonLabel>Y min (auto if blank)</IonLabel>
               <IonInput
-                label="Y min (auto if blank)"
-                labelPlacement="stacked"
                 inputMode="decimal"
                 value={yMinInput}
                 onIonInput={e => setYMinInput(e.detail.value ?? '')}
                 disabled={yAuto}
+                className="ion-text-right"
               />
             </IonItem>
             <IonItem>
+              <IonLabel>Y max (auto if blank)</IonLabel>
               <IonInput
-                label="Y max (auto if blank)"
-                labelPlacement="stacked"
                 inputMode="decimal"
                 value={yMaxInput}
                 onIonInput={e => setYMaxInput(e.detail.value ?? '')}
                 disabled={yAuto}
+                className="ion-text-right"
               />
             </IonItem>
             <IonItem>
+              <IonLabel>Y interval (auto if blank)</IonLabel>
               <IonInput
-                label="Y interval (auto if blank)"
-                labelPlacement="stacked"
                 inputMode="decimal"
                 value={yIntervalInput}
                 onIonInput={e => setYIntervalInput(e.detail.value ?? '')}
                 disabled={yAuto}
+                className="ion-text-right"
               />
             </IonItem>
           </IonList>
@@ -449,9 +451,11 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
         <IonHeader>
           <IonToolbar>
             <IonTitle>X Axis Settings</IonTitle>
-            <IonButtons slot="end">
+            <IonButtons slot="start">
               <IonButton onClick={() => setIsXAxisModalOpen(false)}>Cancel</IonButton>
-              <IonButton strong onClick={saveXAxisSettings}>Apply</IonButton>
+            </IonButtons>
+            <IonButtons slot="end">
+              <IonButton strong onClick={saveXAxisSettings}>Save</IonButton>
             </IonButtons>
           </IonToolbar>
         </IonHeader>
@@ -487,13 +491,13 @@ const MeasurementChart: React.FC<Props> = ({ entries }) => {
               </IonModal>
             </IonItem>
             <IonItem>
+              <IonLabel>X interval (days, auto if blank)</IonLabel>
               <IonInput
-                label="X interval (days, auto if blank)"
-                labelPlacement="stacked"
                 inputMode="decimal"
                 value={xIntervalInput}
                 onIonInput={e => setXIntervalInput(e.detail.value ?? '')}
                 disabled={xAuto}
+                className="ion-text-right"
               />
             </IonItem>
           </IonList>
